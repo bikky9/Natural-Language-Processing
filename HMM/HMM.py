@@ -1,5 +1,7 @@
 import nltk
 import random
+import numpy as np
+from collections import Counter
 
 nltk.download('brown') #Brown cropus
 nltk.download('universal_tagset')  #tag set
@@ -27,23 +29,50 @@ for word,tag in tagged_train_words:
     allwords.add(word)
     alltags.add(tag)
 
-TAGS_COUNT = len(alltags)
-WORDS_COUNT = len(allwords)
+TAGS = list(alltags)
+WORDS = list(allwords)
+TAGS_COUNT = len(TAGS)
+WORDS_COUNT = len(WORDS)
+
+print(TAGS_COUNT,WORDS_COUNT)
+
+TAG_OCCURENCES = Counter()
+for word,tag in tagged_train_words:
+    TAG_OCCURENCES[tag] += 1
 
 def computeEmissionProb(word,tag):
-    words_with_tag = [_word for _word,_tag in tagged_train_words if(_tag == tag)]
-    tagOccurencesCount = len(words_with_tag)
-    wordOccurancesCount = sum([(word == _word) for _word in words_with_tag])
+    tagOccurencesCount = TAG_OCCURENCES[tag]
+    wordOccurancesCount = sum([(word == _word and tag == _tag) for _word,_tag in tagged_train_words])
 
     return (wordOccurancesCount/tagOccurencesCount)
 
 def computeTransitionProb(tag2,tag1):
     tags = [_tag for _word,_tag in tagged_train_words]
-    tag1Ocuurences = sum([(_tag == tag1) for _tag in tags])
+    tag1Ocuurences = TAG_OCCURENCES[tag1]
     transitions = 0
     for i in range(len(tags)-1):
         if tags[i] == tag1 and tags[i+1] == tag2:
             transitions += 1
     return transitions/tag1Ocuurences
 
-print(TAGS_COUNT,WORDS_COUNT)
+transition_matrix = np.zeros((TAGS_COUNT,TAGS_COUNT) , dtype= 'float32')
+for i in range(TAGS_COUNT):
+    for j in range(TAGS_COUNT):
+        transition_matrix[i,j] = computeTransitionProb(TAGS[i],TAGS[j])
+
+
+def viterbi(words):
+    tags_observed = []
+    for word in words:
+        probabilites = []
+        prev_tag_index = TAGS.index(tags_observed[-1]) if tags_observed else TAGS.index('.')
+        
+        for i in range(TAGS_COUNT):
+            transitionProb = transition_matrix[i,prev_tag_index]
+            emissionProb = computeEmissionProb(word,TAGS[i])
+
+            probabilites.append(emissionProb*transitionProb)
+        
+        newtag_index = probabilites.index(max(probabilites))
+        tags_observed.append(TAGS[newtag_index])
+    return list(zip(words,tags_observed))
