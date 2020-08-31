@@ -1,12 +1,8 @@
 import nltk
 import random
 import numpy as np
-<<<<<<< HEAD
 from collections import Counter , defaultdict
 import tqdm
-=======
-from collections import Counter
->>>>>>> 011f14b06a4afae010632c5308e8ba4eb5cead55
 
 nltk.download('brown') #Brown cropus
 nltk.download('universal_tagset')  #tag set
