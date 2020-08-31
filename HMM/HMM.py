@@ -30,4 +30,20 @@ for word,tag in tagged_train_words:
 TAGS_COUNT = len(alltags)
 WORDS_COUNT = len(allwords)
 
+def computeEmissionProb(word,tag):
+    words_with_tag = [_word for _word,_tag in tagged_train_words if(_tag == tag)]
+    tagOccurencesCount = len(words_with_tag)
+    wordOccurancesCount = sum([(word == _word) for _word in words_with_tag])
+
+    return (wordOccurancesCount/tagOccurencesCount)
+
+def computeTransitionProb(tag2,tag1):
+    tags = [_tag for _word,_tag in tagged_train_words]
+    tag1Ocuurences = sum([(_tag == tag1) for _tag in tags])
+    transitions = 0
+    for i in range(len(tags)-1):
+        if tags[i] == tag1 and tags[i+1] == tag2:
+            transitions += 1
+    return transitions/tag1Ocuurences
+
 print(TAGS_COUNT,WORDS_COUNT)
