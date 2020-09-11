@@ -80,7 +80,7 @@ if __name__ == '__main__':
     accuracies = list()
     for train_index, test_index in cv.split(corpusData):
         train_data, test_data = createDataSet(corpusData[train_index], corpusData[test_index])
-        clf = svm.SVC()
+        clf = svm.LinearSVC()
         clf.fit(train_data[0], train_data[1])
         print("Training done")
         X_test, Y_test = test_data
