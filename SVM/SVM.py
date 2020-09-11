@@ -29,21 +29,22 @@ def createDataSet(training_data, testing_data):
     print("feature dictionary size: " + str(len(SUFFIX)))
     TAGS, SUFFIX = list(TAGS), list(SUFFIX)
     SUFFIX_SIZE = len(SUFFIX)
-    WORD_FEATURES_SIZE = 0
+    WORD_FEATURES_SIZE = 1
     FEATURES_SIZE = SUFFIX_SIZE + WORD_FEATURES_SIZE
     X_train, Y_train = [], []
     for sentence in training_data:
         prev = [0] * FEATURES_SIZE
         for word, tag in sentence:
+            wordFeatures = [int(word.islower())]
             stem = stemmer.stem(word)
             index = word.find(stem)
             curr = [0] * SUFFIX_SIZE  # suffix features
             if index != -1:
                 st = word[index + len(stem):]
                 curr[SUFFIX.index(st)] = 1
-            X_train.append(np.array(curr + prev))
+            X_train.append(np.array(prev + curr + wordFeatures))
             Y_train.append(TAGS.index(tag))
-            prev = curr
+            prev = curr + wordFeatures
 
     print("training data size: " + str(len(X_train)) + " " + str(len(Y_train)))
 
@@ -52,15 +53,16 @@ def createDataSet(training_data, testing_data):
     for sentence in testing_data:
         prev, curr = [0] * FEATURES_SIZE, None
         for word, tag in sentence[1:]:
+            wordFeatures = [int(word.islower())]
             curr = [0] * SUFFIX_SIZE
             stem = stemmer.stem(word)
             index = word.find(stem)
             if index != -1:
                 st = word[index + len(stem):]
                 curr[SUFFIX.index(st)] = 1
-            X_test.append(np.array(curr + prev))
+            X_test.append(np.array(prev + curr + wordFeatures))
             Y_test.append(TAGS.index(tag))
-            prev = curr
+            prev = curr + wordFeatures
 
     print("testing data size: " + str(len(X_test)) + " " + str(len(Y_test)))
     return (np.array(X_train), np.array(Y_train)), \
