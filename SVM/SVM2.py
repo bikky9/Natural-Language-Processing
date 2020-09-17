@@ -6,6 +6,8 @@ from collections import defaultdict , Counter
 from sklearn.model_selection import KFold
 from statistics import mean
 from sklearn import svm
+from tqdm import tqdm
+from sklearn.metrics import confusion_matrix
 
 class SVM():
     def __init__(self,corpusData):
@@ -13,7 +15,12 @@ class SVM():
         self.TAGS = None
         self.WORDS_SIZE = None
         self.corpusData = corpusData
-    
+        self.X_TRAIN = None
+        self.Y_TRAIN = None
+        self.SUF = None
+        self.PRE = None
+        self.suf_len = None
+        self.pre_len = None
     def encode_tag(self,tag):
         l = [0]*(len(self.TAGS)+1)
         l[self.TAGS.index(tag)+1] = 1
@@ -27,51 +34,78 @@ class SVM():
         l[-2] = int(word.islower())
         l[-1] = int(word.isalpha())
         return l
+    def suf_pre(self,word):
+      suf = [0]*(self.suf_len)
+      pre = [0]*self.pre_len
+      if word not in self.WORDS:
+        for i in range(1,min(len(word),4)):
+          s = word[-i:]
+          p = word[i:]
+          try:
+            suf[self.SUF.index(s)] = 1
+            pre[self.PRE.index(p)] = 1
+          except Exception:
+            pass
+      return suf+pre
+
 
     def createDataSet(self,training_data):
         stemmer = SnowballStemmer("english")
         self.WORDS = Counter()
         self.TAGS = set()
-        
+        self.SUF = Counter()
+        self.PRE = Counter()
         for sentence in training_data:
             for word, tag in sentence:
                 self.TAGS.add(tag)
                 self.WORDS[word] += 1
-        
+                for i in range(1,min(len(word),4)):
+                  self.SUF[word[-i:]] += 1
+                  self.PRE[word[:i]] += 1
+        THRESHOLD =180
+        self.SUF = [word for word,v in self.SUF.items() if v > 10*THRESHOLD]
+        self.PRE = [word for word,v in self.PRE.items() if v > 10*THRESHOLD]
+        self.suf_len = len(self.SUF)
+        self.pre_len = len(self.PRE)
+        print(self.suf_len , self.pre_len)
         SETS = []
-        THRESHOLD =10
+        
         self.TAGS = list(self.TAGS)
         self.WORDS = [word for word,v in self.WORDS.items() if v > THRESHOLD]
         self.WORDS_SIZE = len(self.WORDS)
         
-        X_TRAIN = [] 
-        Y_TRAIN = []
-        for sentence in training_data:
+        self.X_TRAIN = [] 
+        self.Y_TRAIN = []
+        
+        for sentence in tqdm(training_data):
             prev = [0]*(self.WORDS_SIZE+2)
             curr = self.encode_word(sentence[0][0])
             nex = None
             prev_tag = [0]*(len(self.TAGS)+1)
+            prev_prev = [0]*(len(self.TAGS)+1)
             for i in range(len(sentence)-1):
                 nex = self.encode_word(sentence[i+1][0])
-                X_TRAIN.append(curr + prev + nex + prev_tag)
-                Y_TRAIN.append(self.TAGS.index(sentence[i][1]))
+                self.X_TRAIN.append(curr +self.suf_pre(sentence[i][0])+ prev_tag)
+                self.Y_TRAIN.append(self.TAGS.index(sentence[i][1]))
+                prev_prev = prev_tag
                 prev_tag = self.encode_tag(sentence[i][1])
                 prev = curr
                 curr = nex
-            X_TRAIN.append(curr + prev + [0]*(self.WORDS_SIZE+2)+prev_tag)
-            Y_TRAIN.append(self.TAGS.index(sentence[-1][1]))
-        return (np.array(X_TRAIN), np.array(Y_TRAIN))
+            self.X_TRAIN.append(curr +self.suf_pre(sentence[-1][0])+ prev_tag)
+            self.Y_TRAIN.append(self.TAGS.index(sentence[-1][1]))
+        return 
         
     def evaluate(self):
         random.shuffle(self.corpusData)
         length = len(self.corpusData)
-        corpusData = self.corpusData[:length//15]
+        corpusData = self.corpusData
         cv = KFold(n_splits=5)
         accuracies = list()
         for train_index, test_index in cv.split(corpusData):
-            train_data= self.createDataSet(corpusData[train_index])
+            self.createDataSet(corpusData[train_index])
+            print("Fitting")
             clf = svm.LinearSVC()
-            clf.fit(train_data[0], train_data[1])
+            clf.fit(self.X_TRAIN, self.Y_TRAIN)
             print("Training done")
             Y_test , Y_star = [] , []
             for sentence in corpusData[test_index]:
@@ -79,25 +113,30 @@ class SVM():
                 curr = self.encode_word(sentence[0][0])
                 nex = None
                 prev_tag = [0]*(len(self.TAGS)+1)
+                prev_prev = [0]*(len(self.TAGS)+1)
                 for i in range(len(sentence)-1):
                     nex = self.encode_word(sentence[i+1][0])
-                    x = curr + prev + nex + prev_tag
+                    x = curr + self.suf_pre(sentence[i][0]) + prev_tag
                     prediction = clf.predict([x])
                     Y_test.append(self.TAGS.index(sentence[i][1]))
                     Y_star.append(prediction[0])
-                    
+                    prev_prev = prev_tag
                     prev_tag = [0]*(len(self.TAGS)+1)
                     prev_tag[prediction[0]+1] = 1
                     prev = curr
                     curr = nex
-            x = curr + prev + [0]*(self.WORDS_SIZE+2)+prev_tag
+            x = curr +self.suf_pre(sentence[-1][0])+prev_tag
             prediction = clf.predict([x])
             
             Y_test.append(self.TAGS.index(sentence[-1][1]))
             Y_star.append(prediction[0])
             accuracy = sum([(a == b) for a,b in zip(Y_test,Y_star)])/len(Y_test)
             print("accuracy: " + str(accuracy))
+            cf = confusion_matrix(Y_test, Y_star, labels = range(12))
+            for i in range(cf.shape[0]):
+              print(self.TAGS[i], " accuracy: ", (cf[i][i] / sum(cf[i])) * 100)
             accuracies.append(accuracy)
+            print(cf)
         print("Mean Accuracy after 5-fold cross Validation: ", mean(accuracies) * 100)
 
 
