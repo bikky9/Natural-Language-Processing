@@ -60,8 +60,6 @@ class SVM():
         self.SUF = Counter()
         self.PRE = Counter()
         for sentence in training_data:
-            self.TAGS.add('^')
-            self.WORDS['^'] += 1
             for word, tag in sentence:
                 self.TAGS.add(tag)
                 self.WORDS[word] += 1
@@ -84,11 +82,11 @@ class SVM():
         self.Y_TRAIN = []
 
         for sentence in tqdm(training_data):
-            prev = self.encode_word('^')
+            prev = [0]*(self.WORDS_SIZE+2)
             curr = self.encode_word(sentence[0][0])
             nex = [0] * (self.WORDS_SIZE + 2)
-            prev_tag = self.encode_tag('^')
-            prev_prev = self.encode_tag('^')
+            prev_tag = [0]*(len(self.TAGS)+1)
+            prev_prev = [0]*(len(self.TAGS)+1)
             for i in range(len(sentence) - 1):
                 nex = self.encode_word(sentence[i + 1][0])
                 self.X_TRAIN.append(curr + prev + nex + self.suf_pre(sentence[i][0]) + prev_tag + prev_prev)
@@ -115,11 +113,11 @@ class SVM():
             print("Training done")
             Y_test, Y_star = [], []
             for sentence in corpusData[test_index]:
-                prev = self.encode_word('^')
+                prev = [0]*(self.WORDS_SIZE+2)
                 curr = self.encode_word(sentence[0][0])
                 nex = [0] * (self.WORDS_SIZE + 2)
-                prev_tag = self.encode_tag('^')
-                prev_prev = self.encode_tag('^')
+                prev_tag = [0]*(len(self.TAGS)+1)
+                prev_prev = [0]*(len(self.TAGS)+1)
                 for i in range(len(sentence) - 1):
                     nex = self.encode_word(sentence[i + 1][0])
                     x = curr + prev + nex + self.suf_pre(sentence[i][0]) + prev_tag + prev_prev
@@ -136,22 +134,22 @@ class SVM():
 
                 Y_test.append(self.TAGS.index(sentence[-1][1]))
                 Y_star.append(prediction[0])
-                accuracy = sum([(a == b) for a, b in zip(Y_test, Y_star)]) / len(Y_test)
-                accuracies.append(accuracy)
-                # (un)comment lines till 154, not to display confusion matrix and per POS accuracy
-                # confusionMatrix = confusion_matrix(Y_test, Y_star, labels=range(13))
-                # for i in range(confusionMatrix.shape[0]):
-                #     print(self.TAGS[i], " accuracy: ", (confusionMatrix[i][i] / sum(confusionMatrix[i])) * 100)
-                # pd.set_option('display.max_rows', None)
-                # pd.set_option('display.max_columns', None)
-                # pd.set_option('display.width', None)
-                # pd.set_option('display.max_colwidth', None)
-                # df = pd.DataFrame(confusionMatrix)
-                # df.columns = self.TAGS
-                # df.index = self.TAGS
-                # df.style
-                # print(df)
-                # break
+            accuracy = sum([(a == b) for a, b in zip(Y_test, Y_star)]) / len(Y_test)
+            accuracies.append(accuracy)
+            # (un)comment lines till 154, not to display confusion matrix and per POS accuracy
+            confusionMatrix = confusion_matrix(Y_test, Y_star, labels=range(12))
+            for i in range(confusionMatrix.shape[0]):
+                print(self.TAGS[i], " accuracy: ", (confusionMatrix[i][i] / sum(confusionMatrix[i])) * 100)
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
+            pd.set_option('display.width', None)
+            pd.set_option('display.max_colwidth', None)
+            df = pd.DataFrame(confusionMatrix)
+            df.columns = self.TAGS
+            df.index = self.TAGS
+            df.style
+            print(df)
+            break
         print("Mean Accuracy after 5-fold cross Validation: ", mean(accuracies) * 100)
 
 
