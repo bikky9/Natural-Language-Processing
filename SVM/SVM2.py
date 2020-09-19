@@ -117,7 +117,6 @@ class SVM():
                     curr = nex
                 x = curr + self.suf_pre(sentence[-1][0]) + prev_tag
                 prediction = clf.predict([x])
-    
                 Y_test.append(self.TAGS.index(sentence[-1][1]))
                 Y_star.append(prediction[0])
             accuracy = sum([(a == b) for a, b in zip(Y_test, Y_star)]) / len(Y_test)
@@ -126,15 +125,16 @@ class SVM():
             confusionMatrix = confusion_matrix(Y_test, Y_star, labels=range(12))
             for i in range(confusionMatrix.shape[0]):
                 print(self.TAGS[i], " accuracy: ", (confusionMatrix[i][i] / sum(confusionMatrix[i])) * 100)
-            # pd.set_option('display.max_rows', None)
-            # pd.set_option('display.max_columns', None)
-            # pd.set_option('display.width', None)
-            # pd.set_option('display.max_colwidth', None)
-            # df = pd.DataFrame(confusionMatrix)
-            # df.columns = self.TAGS
-            # df.index = self.TAGS
-            # df.style
-            # print(df)
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
+            pd.set_option('display.width', None)
+            pd.set_option('display.max_colwidth', None)
+            df = pd.DataFrame(confusionMatrix)
+            df.columns = self.TAGS
+            df.index = self.TAGS
+            df.style
+            print(df)
+            break
         print("Mean Accuracy after 5-fold cross Validation: ", mean(accuracies) * 100)
 
 
