@@ -5,9 +5,13 @@ import nltk
 from sklearn.utils import shuffle
 from keras.utils.np_utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
+
 from keras.layers import Embedding , Input , LSTM , Bidirectional , Dense , TimeDistributed
 from keras import Sequential
 from sklearn.model_selection import KFold
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+
 
 SEQ_LENGTH = 200
 EMBED_DIMENSIONS = 100
@@ -56,9 +60,8 @@ with open('./glove/glove.6B.100d.txt', encoding="utf8") as glove_file:
         embeddings[word] = coefs
 
 
-
-X = pad_sequences(X,maxlen=SEQ_LENGTH)
-Y = pad_sequences(Y,maxlen=SEQ_LENGTH)
+X = pad_sequences(X,maxlen=SEQ_LENGTH,padding='post')
+Y = pad_sequences(Y,maxlen=SEQ_LENGTH,padding='post')
 
 X,Y = shuffle(X,Y)
 Y = to_categorical(Y , num_classes=len(TAGS)+1)
@@ -68,6 +71,7 @@ weightsMatrix = np.random.random((len(WORDS)+1,EMBED_DIMENSIONS))
 for word , index in int2word.items():
   if word in embeddings:
     weightsMatrix[index] = embeddings[word]
+
 
 cv = KFold(n_splits=5)
 accuracies = []
@@ -83,7 +87,33 @@ for train_index, test_index in cv.split(X):
   model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['acc'])
   model.summary()
   model.fit(X[train_index],Y[train_index])
-  test_results = model.evaluate(X[test_index], Y[test_index], verbose=0)
-  print('TEST LOSS %f \nTEST ACCURACY: %f' % (test_results[0], test_results[1]))
-  accuracies.append(test_results[1])
+  preds = model.predict(X[test_index], verbose=0)
+  success = 0
+  total = 0
+  y = Y[test_index]
+  Y_pred = []
+  Y_test = []
+  for i,sent in enumerate(y):
+    start = sent[-1]
+    for j,word in enumerate(sent):
+      if np.array_equal(word,start):
+        break
+      Y_pred.append(np.argmax(preds[i][j]))
+      Y_test.append(np.argmax(word))
+
+  accuracy = sum([(a == b) for a, b in zip(Y_test, Y_pred)]) / len(Y_test)
+  accuracies.append(accuracy)
+  # (un)comment lines till 154, not to display confusion matrix and per POS accuracy
+  confusionMatrix = confusion_matrix(Y_test, Y_pred, labels=range(1,13))
+  for i in range(confusionMatrix.shape[0]):
+      print(TAGS[i], " accuracy: ", (confusionMatrix[i][i] / sum(confusionMatrix[i])) * 100)
+  pd.set_option('display.max_rows', None)
+  pd.set_option('display.max_columns', None)
+  pd.set_option('display.width', None)
+  pd.set_option('display.max_colwidth', None)
+  df = pd.DataFrame(confusionMatrix)
+  df.columns = TAGS
+  df.index = TAGS
+  df.style
+  print(df)
 print("Mean Accuracy after 5-fold cross Validation: ", mean(accuracies) * 100)

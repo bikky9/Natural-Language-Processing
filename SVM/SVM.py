@@ -140,7 +140,7 @@ class SVM():
             for i in range(cf.shape[0]):
               print(self.TAGS[i], " accuracy: ", (cf[i][i] / sum(cf[i])) * 100)
             accuracies.append(accuracy)
-            print(cf)
+            # print(cf)
         print("Mean Accuracy after 5-fold cross Validation: ", mean(accuracies) * 100)
 
 
