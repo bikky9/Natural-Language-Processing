@@ -2,3 +2,4 @@
 .vscode/
 *.zip
 chunking/assignment2dataset/
+*.model
