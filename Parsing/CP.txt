@@ -1,0 +1,5 @@
+(ROOT
+  (S
+    (NP (JJ senior) (NNS students))
+    (VP (VBD played)
+      (NP (NN street) (NN football)))))
