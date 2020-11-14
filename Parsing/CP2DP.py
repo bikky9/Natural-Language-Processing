@@ -4,44 +4,54 @@ from nltk.tree import Tree
 
 def dependencyGraph(parseTree):
     if parseTree.label() == 'ROOT':
-        # root, index = dependencyGraph(parseTree[0])
-        root = dependencyGraph(parseTree[0])
-        # print('root(ROOT-0, ' + root + '-' + index + ')')
-        print('root(ROOT, ' + root+')')
-        return root
+        root_ROOT, index_ROOT, type_ROOT = dependencyGraph(parseTree[0])
+        print('root(ROOT-0, ' + root_ROOT + '-' + index_ROOT + ')')
+        return root_ROOT, index_ROOT, parseTree.label()
     elif parseTree.label() == 'S':
-        # root_NP, index_NP = dependencyGraph(parseTree[0])
-        root_NP = dependencyGraph(parseTree[0])
-        # root_VP, index_VP = dependencyGraph(parseTree[1])
-        root_VP = dependencyGraph(parseTree[1])
-        # print('nsubj(' + root_VP + '-' + index_VP + ', ' + root_NP + '-' + index_NP + ')')
-        print('nsubj(' + root_VP + ', ' + root_NP + ')')
-        return root_VP
-    elif parseTree.label() == 'NP':
-        # root_JJ, index_JJ = dependencyGraph(parseTree[0])
-        root_JJ = dependencyGraph(parseTree[0])
+        root_l, index_l, type_l = dependencyGraph(parseTree[0])
         if len(parseTree) == 1:
-            return root_JJ
-        # root_NN, index_NN = dependencyGraph(parseTree[1])
-        root_NN = dependencyGraph(parseTree[1])
-        # print('amod(' + root_NN + '-' + index_NN + ', ' + root_JJ + '-' + index_JJ + ')')
-        print('amod(' + root_NN + ', ' + root_JJ + ')')
-        return root_NN
-    elif parseTree.label() == 'JJ':
-        return parseTree[0]
-    elif parseTree.label() == 'NNS':
-        return parseTree[0]
+            return root_l, index_l, parseTree.label()
+        root_r, index_r, type_r = dependencyGraph(parseTree[1])
+        if type_l == "NP" and type_r == "VP":
+            print('nsubj(' + root_r + '-' + index_r + ', ' + root_l + '-' + index_r + ')')
+            return root_r, index_r, parseTree.label()
+    elif parseTree.label() == 'NP':
+        root_l, index_l, type_l = dependencyGraph(parseTree[0])
+        if len(parseTree) == 1:
+            return root_l, index_l, type_l
+
+        root_r, index_r, type_r = dependencyGraph(parseTree[1])
+        if type_l == "JJ" and (type_r == "NN" or type_r == "NNS"):
+            print('amod(' + root_r + '-' + index_r + ', ' + root_l + '-' + index_l + ')')
+        if type_l == "NN" and (type_r == "NN" or type_r == "NNS"):
+            print('compound(' + root_r + '-' + index_r + ', ' + root_l + '-' + index_l + ')')
+        if type_l == "NP" and type_r == "SBAR":
+            print('acl:relcl(' + root_l + '-' + index_l + ', ' + root_r + '-' + index_r + ')')
+        if type_l == "PRP" and (type_r == "NN" or type_r == "NNS"):
+            print('nmod:poss' + root_r + '-' + index_r + ', ' + root_l + '-' + index_l + ')')
+        return root_r, index_r, parseTree.label()
+    elif parseTree.label() == 'SBAR':
+        root_l, index_l, type_l = dependencyGraph(parseTree[0])
+        root_r, index_r, type_r = dependencyGraph(parseTree[1])
+        if type_l == "WHNP" and type_r == 'S':
+            print('nsubj(' + root_r + '-' + index_r + ', ' + root_l + '-' + index_r + ')')
+            return root_r, index_r, parseTree.label()
+    elif parseTree.label() == "WHNP":
+        root_l, index_l, type_l = dependencyGraph(parseTree[0])
+        return root_l, index_l, parseTree.label()
     elif parseTree.label() == 'VP':
-        # root_VBD, index_VBD = dependencyGraph(parseTree[0])
-        root_VBD = dependencyGraph(parseTree[0])
-        # root_NP, index_NP = dependencyGraph(parseTree[1])
-        root_NP = dependencyGraph(parseTree[1])
-        print('obj(' + root_VBD + ', ' + root_NP + ')')
-        return root_VBD
-    elif parseTree.label() == 'VBD':
-        return parseTree[0]
-    elif parseTree.label() == 'NN':
-        return parseTree[0]
+        root_l, index_l, type_l = dependencyGraph(parseTree[0])
+        root_r, index_r, type_r = dependencyGraph(parseTree[1])
+        if (type_l == 'VBD' or type_l == 'VBN') and type_r == 'NP':
+            print('obj(' + root_l + '-' + index_l + ', ' + root_r + '-' + index_r + ')')
+            return root_l, index_l, parseTree.label()
+        if type_l == 'VBD' and type_r == 'VP':
+            print('aux(' + root_r + '-' + index_r + ', ' + root_l + '-' + index_l + ')')
+            return root_r, index_r, parseTree.label()
+    elif parseTree.label() in ['JJ', 'NNS', 'NN', 'VBD', 'VBN', 'WP', 'PRP$']:
+        global index
+        index += 1
+        return parseTree[0], str(index), parseTree.label()
     return
 
 
@@ -53,4 +63,5 @@ if __name__ == '__main__':
     CP = args.CP
     CPfile = open(CP, 'r')
     parseTree = Tree.fromstring(CPfile.read())
+    index = 0
     G = dependencyGraph(parseTree)

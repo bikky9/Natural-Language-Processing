@@ -1,5 +1,12 @@
 (ROOT
   (S
-    (NP (JJ senior) (NNS students))
+    (NP
+      (NP (JJ Senior) (NNS students))
+      (SBAR
+        (WHNP (WP who))
+        (S
+          (VP (VBD had)
+            (VP (VBN finished)
+              (NP (PRP$ their) (NNS exams)))))))
     (VP (VBD played)
       (NP (NN street) (NN football)))))
