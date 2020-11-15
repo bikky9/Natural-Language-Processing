@@ -9,4 +9,10 @@
             (VP (VBN finished)
               (NP (PRP$ their) (NNS exams)))))))
     (VP (VBD played)
-      (NP (NN street) (NN football)))))
+      (ADVP (RB energetically))
+      (NP
+        (NP (NN street) (NN football))
+        (PP (IN with)
+          (NP
+            (NP (NNS crowds))
+            (VP (VBG watching))))))))

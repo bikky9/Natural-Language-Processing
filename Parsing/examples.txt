@@ -1,0 +1,79 @@
+1) students played football
+
+CP:
+(ROOT
+  (S
+    (NP (NNS students))
+    (VP (VBD played)
+      (NP (NN football)))))
+
+DP:
+nsubj(played-2, students-1)
+root(ROOT-0, played-2)
+obj(played-2, football-3)
+----------------------------------------------------------------------------------------------------------
+2) senior students who had finished their exams played street football
+
+CP:
+(ROOT
+  (S
+    (NP
+      (NP (JJ senior) (NNS students))
+      (SBAR
+        (WHNP (WP who))
+        (S
+          (VP (VBD had)
+            (VP (VBN finished)
+              (NP (PRP$ their) (NNS exams)))))))
+    (VP (VBD played)
+      (NP (NN street) (NN football)))))
+
+DP:
+amod(students-2, senior-1)
+nsubj(played-8, students-2)
+nsubj(finished-5, who-3)
+aux(finished-5, had-4)
+acl:relcl(students-2, finished-5)
+nmod:poss(exams-7, their-6)
+obj(finished-5, exams-7)
+root(ROOT-0, played-8)
+compound(football-10, street-9)
+obj(played-8, football-10)
+--------------------------------------------------------------------------------------------------------
+3) Senior students who had finished their exams played energetically street football with crowds watching
+
+CP:
+(ROOT
+  (S
+    (NP
+      (NP (JJ Senior) (NNS students))
+      (SBAR
+        (WHNP (WP who))
+        (S
+          (VP (VBD had)
+            (VP (VBN finished)
+              (NP (PRP$ their) (NNS exams)))))))
+    (VP (VBD played)
+      (ADVP (RB energetically))
+      (NP
+        (NP (NN street) (NN football))
+        (PP (IN with)
+          (NP
+            (NP (NNS crowds))
+            (VP (VBG watching))))))))
+
+DP:
+amod(students-2, Senior-1)
+nsubj(played-8, students-2)
+nsubj(finished-5, who-3)
+aux(finished-5, had-4)
+acl:relcl(students-2, finished-5)
+nmod:poss(exams-7, their-6)
+obj(finished-5, exams-7)
+root(ROOT-0, played-8)
+advmod(played-8, energetically-9)
+compound(football-11, street-10)
+obj(played-8, football-11)
+case(crowds-13, with-12)
+nmod(football-11, crowds-13)
+acl(crowds-13, watching-14)
